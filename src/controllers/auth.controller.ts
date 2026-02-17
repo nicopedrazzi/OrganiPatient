@@ -3,15 +3,21 @@ import { userLogin, userRegistration } from "../services/auth.service";
 
 export async function registerHandler(req: Request, res: Response) {
   try {
-    const { email, name, surname, password } = req.body ?? {};
+    const { email, password, role, orgId } = req.body ?? {};
 
-    if (!email || !name || !surname || !password) {
+    if (!email || !password || !role || !orgId) {
       return res.status(400).json({
-        error: "email, name, surname and password are required",
+        error: "email, password, role and orgId are required",
       });
     }
 
-    const createdUser = await userRegistration({ email, name, surname }, password);
+    if (!["admin", "doctor", "nurse"].includes(role)) {
+      return res.status(400).json({
+        error: "role must be one of: admin, doctor, nurse",
+      });
+    }
+
+    const createdUser = await userRegistration({ email, role, orgId }, password);
     return res.status(201).json({
       message: "User successfully registered",
       user: createdUser,

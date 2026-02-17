@@ -1,21 +1,20 @@
-import { addUser, checkEmail, checkPassword } from "../db/queries/users";
+import { addUser, checkPassword, getUserByEmail } from "../db/queries/users";
 import { hash } from "argon2";
-import { users } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { userRoleEnum } from "../db/schema";
 
 export type User = {
   email: string;
-  name: string;
-  surname: string;
+  role: (typeof userRoleEnum.enumValues)[number];
+  orgId: string;
 };
 
 export async function userRegistration(user: User, password: string) {
   const passwordHash = await hash(password);
   const created = await addUser({
     email: user.email,
-    name: user.name,
-    surname: user.surname,
     passwordHash,
+    role: user.role,
+    orgId: user.orgId,
   });
   if (!created) {
     throw new Error("Failed to create user");
@@ -24,19 +23,18 @@ export async function userRegistration(user: User, password: string) {
   return {
     id: created.id,
     email: created.email,
-    name: created.name,
-    surname: created.surname,
+    role: created.role,
+    orgId: created.orgId,
+    isActive: created.isActive,
     createdAt: created.createdAt,
   };
 }
 
-export async function userLogin(email:string, password:string){
-    const userId = await checkEmail(email);
-    if (!userId){
-        throw new Error("Unknown email");
-    };
-    if (await checkPassword(password,userId)){
-        return true;
-    };
+export async function userLogin(email: string, password: string) {
+  const user = await getUserByEmail(email);
+  if (!user) {
     return false;
-};
+  }
+
+  return checkPassword(password, user.id);
+}

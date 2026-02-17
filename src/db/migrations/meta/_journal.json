@@ -15,6 +15,13 @@
       "when": 1771357823172,
       "tag": "0001_fresh_gladiator",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771360100000,
+      "tag": "0002_bright_roles",
+      "breakpoints": true
     }
   ]
 }
