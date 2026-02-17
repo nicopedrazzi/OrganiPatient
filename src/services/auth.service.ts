@@ -1,5 +1,7 @@
-import { addUser } from "../db/queries/users";
+import { addUser, checkEmail, checkPassword } from "../db/queries/users";
 import { hash } from "argon2";
+import { users } from "../db/schema";
+import { eq } from "drizzle-orm";
 
 export type User = {
   email: string;
@@ -27,3 +29,14 @@ export async function userRegistration(user: User, password: string) {
     createdAt: created.createdAt,
   };
 }
+
+export async function userLogin(email:string, password:string){
+    const userId = await checkEmail(email);
+    if (!userId){
+        throw new Error("Unknown email");
+    };
+    if (await checkPassword(password,userId)){
+        return true;
+    };
+    return false;
+};

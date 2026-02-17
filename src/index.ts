@@ -22,6 +22,7 @@ app.get("/health/db", async (_req, res) => {
 
 app.use("/auth", authRouter);
 
+
 app.use((_req, res) => {
   res.status(404).json({ error: "Not found" });
 });
