@@ -1,6 +1,7 @@
 import { addUser, checkPassword, getUserByEmail } from "../db/queries/users";
 import { hash } from "argon2";
 import { userRoleEnum } from "../db/schema";
+import { createNewSession } from "../db/queries/sessions";
 
 export type User = {
   email: string;
@@ -34,7 +35,10 @@ export async function userLogin(email: string, password: string) {
   const user = await getUserByEmail(email);
   if (!user) {
     return false;
-  }
-
-  return checkPassword(password, user.id);
+  } else if (!checkPassword(password, user.id)){
+    return false;
+  };
+  const session = createNewSession({userId: user.id})
+  return session;
 }
+

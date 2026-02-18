@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import { userLogin, userRegistration } from "../services/auth.service";
+import { revokeCookie } from "../db/queries/sessions";
+
 
 export async function registerHandler(req: Request, res: Response) {
   try {
@@ -38,14 +40,25 @@ export async function loginHandler(req: Request, res: Response) {
       });
     }
 
-    const isValidLogin = await userLogin(email, password);
-    if (!isValidLogin) {
+    const loggedInSession = await userLogin(email, password);
+    if (!loggedInSession) {
       return res.status(401).json({ error: "Invalid email or password" });
-    }
-
-    return res.status(200).json({ message: "User successfully logged in" });
+    };
+    res.cookie("session", loggedInSession[0]?.id, {
+    httpOnly: true,
+    sameSite: "lax",
+    expires: loggedInSession[0]?.expiresAt ,
+    path: "/",
+  });
+    return res.status(200).json({ message: "User successfully logged in and cookie set" });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Login failed";
     return res.status(400).json({ error: message });
   }
 }
+
+export async function logoutHandler(res:Response,req:Request){
+  revokeCookie(req.cookies.session);
+  res.clearCookie("session", { path: "/" });
+  res.json({ ok: true });
+};
