@@ -50,15 +50,17 @@ export async function loginHandler(req: Request, res: Response) {
     expires: loggedInSession[0]?.expiresAt ,
     path: "/",
   });
-    return res.status(200).json({ message: "User successfully logged in and cookie set" });
+  
+    return res.redirect("/reports/upload");
+    
   } catch (error) {
     const message = error instanceof Error ? error.message : "Login failed";
     return res.status(400).json({ error: message });
   }
 }
 
-export async function logoutHandler(res:Response,req:Request){
-  revokeCookie(req.cookies.session);
+export async function logoutHandler(req: Request, res: Response) {
+  await revokeCookie(req.cookies.session);
   res.clearCookie("session", { path: "/" });
-  res.json({ ok: true });
-};
+  return res.json({ ok: true });
+}
