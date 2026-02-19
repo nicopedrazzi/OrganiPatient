@@ -2,14 +2,10 @@
 import { readFile } from "node:fs/promises";
 import { PDFParse } from "pdf-parse";
 import { newReport } from "../db/queries/reports";
+import { extractSections } from "../regex/sections";
+import { extractFields } from "../regex/fields";
+import { extractVitals } from "../regex/clinical";
 
-
-type reportJson = {
-    name?: string;
-    surname?: string;
-    age?: number;
-    date?: string;
-};
 
 export async function parseUploadedPdfFile(userId:number,path: string) {
   const data = await readFile(path);
@@ -26,36 +22,15 @@ export async function parseUploadedPdfFile(userId:number,path: string) {
   return { pages: info.total, text: text.text, info: info.info };
 };
 
-export function extractInfo(text:string):reportJson{
-    const lines = text.split("\n");
-    let regexName = /name/i;
-    let regexSurname = /surname/i;
-    let regexAge = /age/i;
-    let regexDate = /date/i;
-    const result: reportJson = {};
+export function extractInfo(text: string) {
+  const sectionsArr = extractSections(text);
 
-    for (let line of lines){
-        if (regexAge.test(line)){
-            const splitLine = line.split(" ");
-            const age = splitLine[1];
-            if (age) result.age = Number(age);
-        };
-        if (regexName.test(line)){
-            const splitLine = line.split(" ");
-            const name = splitLine[1];
-            if (name) result.name = name;
-        };
-        if (regexSurname.test(line)){
-            const splitLine = line.split(" ");
-            const surname = splitLine[1];
-            if (surname) result.surname = surname;
-        };
-        if (regexDate.test(line)){
-            const splitLine = line.split(" ");
-            const date = splitLine[1];
-            if (date) result.date = date;
-        };
-    }
-    console.log(result);
-    return result;
+  const sections = Object.fromEntries(
+    sectionsArr.map((s) => [s.header.toLowerCase(), s.text] as const)
+  );
+
+  const basicInformation = extractFields(text);
+  const vitals = extractVitals(text);
+
+  return { sections, basicInformation, vitals };
 }

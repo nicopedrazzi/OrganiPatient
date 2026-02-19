@@ -31,7 +31,7 @@ export async function extractInfoHandler(req:Request,res:Response){
     }
     const text = report.parsedText;
     const result = extractInfo(text);
-    console.log(result)
-    res.status(200).send(`Succesfully obtained data: ${result}`);
+    const jsonResult = JSON.stringify(result);
+    res.status(200).json(jsonResult);
     return result;
 };
