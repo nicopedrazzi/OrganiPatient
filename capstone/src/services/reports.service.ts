@@ -4,7 +4,7 @@ import { PDFParse } from "pdf-parse";
 import { newReport } from "../db/queries/reports";
 import { extractSections } from "../regex/sections";
 import { extractFields } from "../regex/fields";
-import { extractVitals } from "../regex/clinical";
+import { extractSystemBlocks, extractVitals } from "../regex/clinical";
 
 
 export async function parseUploadedPdfFile(userId:number,path: string) {
@@ -29,8 +29,19 @@ export function extractInfo(text: string) {
     sectionsArr.map((s) => [s.header.toLowerCase(), s.text] as const)
   );
 
-  const basicInformation = extractFields(text);
-  const vitals = extractVitals(text);
+  let vitalSec = sections["vital signs"]
+  if (!vitalSec){
+    vitalSec = ""
+  };
+  let systemReview = sections["review of systems"];
+  if (!systemReview){
+    systemReview = ""
+  };
 
-  return { sections, basicInformation, vitals };
+  const basicInformation = extractFields(text);
+  const vitals = extractVitals(vitalSec);
+  const systemGeneral = extractSystemBlocks(systemReview, "ros");
+  const systemPhysical = extractSystemBlocks(systemReview, "pe");
+
+  return { sections, basicInformation, vitals, systemGeneral,systemPhysical };
 }

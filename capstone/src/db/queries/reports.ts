@@ -13,6 +13,35 @@ export async function getReport(reportId:number){
   return report;
 };
 
+export async function getUserReport(reportId: number, userId: number) {
+  const [report] = await db
+    .select()
+    .from(reportsData)
+    .where(
+      and(
+        eq(reportsData.id, reportId),
+        eq(reportsData.userId, userId),
+        isNull(reportsData.removedAt),
+      ),
+    );
+
+  return report;
+}
+
+export async function listUserReports(userId: number) {
+  const reports = await db
+    .select({
+      id: reportsData.id,
+      addedAt: reportsData.addedAt,
+      pagesNum: reportsData.pagesNum,
+      isAnonymized: reportsData.isAnonymized,
+    })
+    .from(reportsData)
+    .where(and(eq(reportsData.userId, userId), isNull(reportsData.removedAt)));
+
+  return reports;
+}
+
 export async function softDeleteReport(reportId: number, userId: number) {
   const [result] = await db
     .update(reportsData)

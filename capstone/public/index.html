@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reports Viewer</title>
+    <style>
+      :root {
+        --bg-a: #f6f9f3;
+        --bg-b: #e2ece9;
+        --ink: #102a43;
+        --muted: #486581;
+        --card: #ffffff;
+        --accent: #0b6e4f;
+        --accent-2: #ff7f11;
+        --border: #d9e2ec;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Avenir Next", "Trebuchet MS", "Segoe UI", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 10% 10%, #ffffff 0%, transparent 40%),
+          linear-gradient(145deg, var(--bg-a), var(--bg-b));
+      }
+
+      .wrap {
+        width: min(960px, 92vw);
+        margin: 42px auto;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 18px;
+        box-shadow: 0 10px 25px rgba(16, 42, 67, 0.08);
+      }
+
+      h1 {
+        margin: 0 0 16px;
+        letter-spacing: 0.4px;
+      }
+
+      .row {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 1fr;
+      }
+
+      @media (min-width: 760px) {
+        .row {
+          grid-template-columns: 300px 1fr;
+          align-items: start;
+        }
+      }
+
+      input, button {
+        font: inherit;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+      }
+
+      button {
+        border-color: transparent;
+        background: var(--accent);
+        color: #fff;
+        cursor: pointer;
+      }
+
+      button.alt {
+        background: var(--accent-2);
+      }
+
+      .stack {
+        display: grid;
+        gap: 10px;
+      }
+
+      .hidden { display: none; }
+
+      .report-list button {
+        width: 100%;
+        text-align: left;
+        background: #fff;
+        color: var(--ink);
+        border: 1px solid var(--border);
+      }
+
+      pre {
+        margin: 0;
+        max-height: 65vh;
+        overflow: auto;
+        background: #0f172a;
+        color: #dbeafe;
+        padding: 14px;
+        border-radius: 12px;
+      }
+
+      .muted { color: var(--muted); }
+      .toolbar { display: flex; gap: 10px; }
+    </style>
+  </head>
+  <body>
+    <main class="wrap stack">
+      <section class="card" id="loginCard">
+        <h1>Login</h1>
+        <div class="stack">
+          <input id="email" type="email" placeholder="email" />
+          <input id="password" type="password" placeholder="password" />
+          <button id="loginBtn">Sign In</button>
+          <p class="muted" id="loginMsg"></p>
+        </div>
+      </section>
+
+      <section class="card hidden" id="appCard">
+        <div class="toolbar" style="margin-bottom: 14px;">
+          <button class="alt" id="refreshBtn">Refresh Reports</button>
+          <button id="logoutBtn">Logout</button>
+        </div>
+
+        <div class="row">
+          <div>
+            <h3 style="margin-top:0;">Your Reports</h3>
+            <div class="stack report-list" id="reportList"></div>
+          </div>
+          <div>
+            <h3 style="margin-top:0;">Extracted JSON</h3>
+            <pre id="resultPane">Select a report to view extracted data.</pre>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const loginCard = document.getElementById("loginCard");
+      const appCard = document.getElementById("appCard");
+      const reportList = document.getElementById("reportList");
+      const resultPane = document.getElementById("resultPane");
+      const loginMsg = document.getElementById("loginMsg");
+
+      async function checkSession() {
+        const res = await fetch("/auth/me", { credentials: "same-origin" });
+        return res.ok;
+      }
+
+      function showApp(authenticated) {
+        loginCard.classList.toggle("hidden", authenticated);
+        appCard.classList.toggle("hidden", !authenticated);
+      }
+
+      async function login() {
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+
+        loginMsg.textContent = "";
+        const res = await fetch("/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ email, password })
+        });
+
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          loginMsg.textContent = body.error || "Login failed";
+          return;
+        }
+
+        showApp(true);
+        await loadReports();
+      }
+
+      async function logout() {
+        await fetch("/auth/logout", {
+          method: "POST",
+          credentials: "same-origin"
+        });
+        showApp(false);
+        reportList.innerHTML = "";
+        resultPane.textContent = "Select a report to view extracted data.";
+      }
+
+      async function loadReports() {
+        const res = await fetch("/reports/mine", { credentials: "same-origin" });
+        if (!res.ok) {
+          reportList.innerHTML = "<p class='muted'>Could not load reports.</p>";
+          return;
+        }
+
+        const body = await res.json();
+        const reports = body.reports || [];
+
+        if (reports.length === 0) {
+          reportList.innerHTML = "<p class='muted'>No reports uploaded yet.</p>";
+          return;
+        }
+
+        reportList.innerHTML = "";
+        for (const r of reports) {
+          const btn = document.createElement("button");
+          const date = r.addedAt ? new Date(r.addedAt).toLocaleString() : "unknown date";
+          btn.textContent = `#${r.id} • ${r.pagesNum} pages • ${date}`;
+          btn.onclick = () => viewReport(r.id);
+          reportList.appendChild(btn);
+        }
+      }
+
+      async function viewReport(reportId) {
+        resultPane.textContent = "Loading...";
+        const res = await fetch(`/reports/${reportId}/info`, { credentials: "same-origin" });
+        if (!res.ok) {
+          resultPane.textContent = `Error loading report ${reportId}`;
+          return;
+        }
+        const body = await res.json();
+        resultPane.textContent = JSON.stringify(body, null, 2);
+      }
+
+      document.getElementById("loginBtn").onclick = login;
+      document.getElementById("logoutBtn").onclick = logout;
+      document.getElementById("refreshBtn").onclick = loadReports;
+
+      (async () => {
+        const authenticated = await checkSession().catch(() => false);
+        showApp(authenticated);
+        if (authenticated) {
+          await loadReports();
+        }
+      })();
+    </script>
+  </body>
+</html>

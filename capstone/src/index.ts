@@ -5,7 +5,6 @@ import { db } from "./db";
 import authRouter from "./routes/auth.routes";
 import cookieParser from "cookie-parser";
 import reportsRouter from "./routes/reports.routes";
-import { devNull } from "node:os";
 import devRouter from "./routes/dev.routes";
 import { cookieMiddleware } from "./middleware/requireAuth";
 
@@ -26,6 +25,7 @@ app.get("/health/db", async (_req, res) => {
   res.json({ ok: result[0]?.ok === 1 });
 });
 
+app.use(express.static("public"));
 
 app.use("/auth", authRouter);
 app.use("/reports",cookieMiddleware, reportsRouter);

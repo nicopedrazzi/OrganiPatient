@@ -1,8 +1,6 @@
 import { Router } from "express";
-import { cookieMiddleware } from "../middleware/requireAuth";
-import { extractInfoHandler, uploadHandler } from "../controllers/reports.controller";
+import { extractInfoHandler, listMineHandler, uploadHandler } from "../controllers/reports.controller";
 import { uploadMiddleware } from "../middleware/fileLoader";
-import { extractInfo } from "../services/reports.service";
 
 const reportsRouter = Router();
 
@@ -11,6 +9,7 @@ reportsRouter.get("/health", (_req, res) => {
 });
 
 reportsRouter.post("/upload",uploadMiddleware, uploadHandler);
+reportsRouter.get("/mine", listMineHandler);
 reportsRouter.get("/:reportId/info", extractInfoHandler);
 
 export default reportsRouter;

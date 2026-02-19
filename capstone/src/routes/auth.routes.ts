@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { loginHandler, logoutHandler, registerHandler } from "../controllers/auth.controller";
+import { loginHandler, logoutHandler, meHandler, registerHandler } from "../controllers/auth.controller";
 import { cookieMiddleware } from "../middleware/requireAuth";
 
 const authRouter = Router();
@@ -11,5 +11,6 @@ authRouter.get("/health", (_req, res) => {
 authRouter.post("/register", registerHandler);
 authRouter.post("/login", loginHandler);
 authRouter.post("/logout", logoutHandler);
+authRouter.get("/me", cookieMiddleware, meHandler);
 
 export default authRouter;

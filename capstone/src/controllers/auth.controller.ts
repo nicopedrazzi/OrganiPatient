@@ -54,7 +54,7 @@ export async function loginHandler(req: Request, res: Response) {
     path: "/",
   });
   
-    return res.redirect("/reports/upload");
+    return res.json({ ok: true, userId: loggedInSession[0]?.userId ?? null });
     
   } catch (error) {
     const message = error instanceof Error ? error.message : "Login failed";
@@ -69,12 +69,20 @@ export async function logoutHandler(req: Request, res: Response) {
 }
 
 
-export async function getLoggedUser(req:Request){
-  const cookie = req.cookies.session
-  const currentSession = await db.select().from(sessions).where(eq(sessions.id,cookie));
-  if (currentSession.length === 0){
-    return "No user logged in";
-  };
-  const userId = currentSession[0]?.userId;
-  return userId;
-};
+export async function meHandler(req: Request, res: Response) {
+  const userId = await getLoggedUser(req);
+  if (userId === null) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  return res.json({ userId });
+}
+
+export async function getLoggedUser(req: Request): Promise<number | null> {
+  const cookie = req.cookies.session as string | undefined;
+  if (!cookie) return null;
+
+  const currentSession = await db.select().from(sessions).where(eq(sessions.id, cookie));
+  if (currentSession.length === 0) return null;
+
+  return currentSession[0]?.userId ?? null;
+}
