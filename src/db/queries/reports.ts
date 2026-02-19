@@ -8,6 +8,11 @@ export async function newReport(report: newReport){
     return result;
 };
 
+export async function getReport(reportId:number){
+  const [report] = await db.select().from(reportsData).where(eq(reportsData.id,reportId));
+  return report;
+};
+
 export async function softDeleteReport(reportId: number, userId: number) {
   const [result] = await db
     .update(reportsData)

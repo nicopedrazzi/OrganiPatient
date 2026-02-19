@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
 import { userLogin, userRegistration } from "../services/auth.service";
 import { revokeCookie } from "../db/queries/sessions";
+import { db } from "../db";
+import { sessions } from "../db/schema";
+import { eq } from "drizzle-orm";
 
 
 export async function registerHandler(req: Request, res: Response) {
@@ -64,3 +67,14 @@ export async function logoutHandler(req: Request, res: Response) {
   res.clearCookie("session", { path: "/" });
   return res.json({ ok: true });
 }
+
+
+export async function getLoggedUser(req:Request){
+  const cookie = req.cookies.session
+  const currentSession = await db.select().from(sessions).where(eq(sessions.id,cookie));
+  if (currentSession.length === 0){
+    return "No user logged in";
+  };
+  const userId = currentSession[0]?.userId;
+  return userId;
+};

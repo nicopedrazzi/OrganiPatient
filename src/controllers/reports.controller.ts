@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import { parseUploadedPdfFile } from "../services/reports.service";
+import { getLoggedUser } from "./auth.controller";
+import { getReport } from "../db/queries/reports";
 
 export async function uploadHandler(req: Request, res: Response) {
   try {
@@ -8,10 +10,27 @@ export async function uploadHandler(req: Request, res: Response) {
       return res.status(400).json({ error: "PDF file is required in field 'file'" });
     }
 
-    const parseOutcome = await parseUploadedPdfFile(filePath);
+    const userId = await getLoggedUser(req);
+    if (typeof userId !== "number"){
+        throw new Error("Logged user is missing")
+    }
+    const parseOutcome = await parseUploadedPdfFile(userId,filePath);
     return res.status(200).json(parseOutcome);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to parse PDF";
     return res.status(400).json({ error: message });
-  }
-}
+  };
+};
+
+export async function extractInfoHandler(req:Request,res:Response){
+    const fileId = req.body.fileId;
+    const report = await getReport(fileId);
+    if (!report){
+        res.status(400).send("Report not found");
+        return;
+    }
+    const text = report.parsedText;
+    console.log(text);
+    res.status(200).send("succesfully obtained data")
+    return text;
+};

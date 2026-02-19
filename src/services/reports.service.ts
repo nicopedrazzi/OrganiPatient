@@ -1,6 +1,8 @@
 
 import { readFile } from "node:fs/promises";
 import { PDFParse } from "pdf-parse";
+import { newReport } from "../db/queries/reports";
+
 
 type reportJson = {
     name?: string;
@@ -9,12 +11,18 @@ type reportJson = {
     date?: string;
 };
 
-export async function parseUploadedPdfFile(path: string) {
+export async function parseUploadedPdfFile(userId:number,path: string) {
   const data = await readFile(path);
   const parser = new PDFParse({ data });
   const text = await parser.getText();
   const info = await parser.getInfo();
   await parser.destroy();
+  newReport({
+    userId,
+    parsedText:text.text,
+    pagesNum:info.total,
+    addedAt: new Date()
+  })
   return { pages: info.total, text: text.text, info: info.info };
 };
 
@@ -48,5 +56,6 @@ export function extractInfo(text:string):reportJson{
             if (date) result.date = date;
         };
     }
+    console.log(result);
     return result;
 }

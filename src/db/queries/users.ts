@@ -25,3 +25,5 @@ export async function checkPassword(password: string, userId: number) {
   const isValid = await verify(user.passwordHash, password);
   return isValid;
 }
+
+
