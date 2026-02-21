@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { apiFetch } from "@/lib/api";
+import { Button } from "@/components/ui/button";
 
 type Role = "admin" | "doctor" | "nurse";
 
@@ -68,9 +69,9 @@ export default function RegisterPage() {
           placeholder="orgId"
           required
         />
-        <button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Registering..." : "Register"}
-        </button>
+        </Button>
       </form>
       {msg && <p style={{ color: "green" }}>{msg}</p>}
       {err && <p style={{ color: "red" }}>{err}</p>}

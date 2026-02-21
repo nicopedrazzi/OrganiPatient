@@ -1,10 +1,15 @@
 "use client";
 import { useState } from "react";
 import { apiFetch } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+
+
 
 export default function Upload() {
   const [file, setFile] = useState<File | null>(null);
   const [msg, setMsg] = useState("");
+  const router = useRouter()
 
   async function upload() {
     if (!file) return;
@@ -18,7 +23,7 @@ export default function Upload() {
         method: "POST",
         body: fd,
       });
-      setMsg("Uploaded. Open /reports to view it.");
+      router.push("/reports");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Upload failed";
       setMsg(message);
@@ -29,7 +34,7 @@ export default function Upload() {
     <main style={{ padding: 24 }}>
       <h1>Upload</h1>
       <input type="file" accept="application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-      <button onClick={upload} disabled={!file}>Upload</button>
+      <Button onClick={upload} disabled={!file}>Upload</Button>
       <p>{msg}</p>
     </main>
   );

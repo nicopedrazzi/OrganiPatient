@@ -45,3 +45,7 @@ export function extractInfo(text: string) {
 
   return { sections, basicInformation, vitals, systemGeneral,systemPhysical };
 }
+
+export async function generateReport(){
+
+};

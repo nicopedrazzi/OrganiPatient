@@ -1,0 +1,12 @@
+{
+  "name": "clinicapp",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -k -n backend,frontend \"npm run dev --prefix capstone\" \"npm run dev --prefix web\"",
+    "dev:backend": "npm run dev --prefix capstone",
+    "dev:frontend": "npm run dev --prefix web"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

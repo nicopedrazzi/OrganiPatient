@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
+import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -38,7 +39,7 @@ export default function LoginPage() {
           placeholder="password"
           type="password"
         />
-        <button type="submit">Login</button>
+        <Button type="submit">Login</Button>
       </form>
       {err && <p style={{ color: "red" }}>{err}</p>}
     </main>
